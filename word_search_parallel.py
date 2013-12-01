@@ -109,20 +109,24 @@ def find_word_list(sub_words):
         
         if find_match == False:
             #print word,'Not Found'
-            output[word]=' Not Found'+'\n'
+            output[word]='Not Found'+'\n'
     return output
 """------------------------------------------------------------------"""
 
 
 
 """------------------------------Reducer-----------------------------""" 
-def Reduce(words, words_result):
+def Reduce(words, words_search_result):
   """combine result from different processors"""
-  sum_output={}
-  for item in List:
-      sum_output=dict( sum_output.items()+item.items())
-  print sum_output
-  return sum_output
+  output_dict={}
+  for item in words_search_result:
+      output_dict=dict(output_dict.items()+item.items())
+  
+  # match dict key words with the sequence of the given words
+  output_string=''
+  for eachword in words:
+    output_string=output_string+output_dict[eachword]
+  return output_string
 """------------------------------------------------------------------"""
 
 
@@ -140,10 +144,11 @@ if __name__ == '__main__':
 
   partitioned_text = list(chunk(words, len(words) / 4))
   
-  para_process= pool.map(find_word_list, partitioned_text)
+  parallel_process= pool.map(find_word_list, partitioned_text)
 
-  writeout=Reduce(para_process)
-  #with open("Output_file_multi_process.txt","w") as write_multi:
-  #    write_multi.write(writeout)
+  writeout=Reduce(words,parallel_process)
+  
+  with open("Output_file_multi_process.txt","w") as write_multi:
+      write_multi.write(writeout)
 
   print datetime.datetime.now()-start_time2
