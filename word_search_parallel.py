@@ -138,7 +138,7 @@ if __name__ == '__main__':
   pool = Pool(processes=4,)
   start_time2=datetime.datetime.now()
  
-  puzzle=get_file("Input_file_long.txt")
+  puzzle=get_file("Input_file_for_parallel.txt")
   (row,column)=get_row_column(puzzle)
   words=get_wordlist(puzzle,row)
 
@@ -148,7 +148,7 @@ if __name__ == '__main__':
 
   writeout=Reduce(words,parallel_process)
   
-  with open("Output_file_multi_process.txt","w") as write_multi:
+  with open("Output_file_by_parallel.txt","w") as write_multi:
       write_multi.write(writeout)
 
   print datetime.datetime.now()-start_time2
