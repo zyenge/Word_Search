@@ -37,19 +37,29 @@ class word_puzzle:
         # read puzzle board
         self.board=[]
         for count in range(self.row):
+          if len(self.puzzle[1+count])==self.column:
             self.board.append([board_row for board_row in self.puzzle[1+count]])
+          else:
+            print "column counts doen't match column number at line %s" %self.puzzle[1+count]
+            system.exit(0)
 
+        
+        #get wrap condition:
+        if self.puzzle[self.row+1]=='NO_WRAP':
+            self.wrap=False
+        elif self.puzzle[self.row+1]=='WRAP':
+            self.wrap=True
+        else:
+          print "wrap condition not specified or the number of rows doens't match the given row count at line %s" %str(self.row+1)
+          sys.exit(0)
+        
+        
         #words to search
         self.word_count=int(self.puzzle[self.row+2])
         self.words=[]
         for count in range(self.word_count):
             self.words.append(self.puzzle[self.row+3+count])
         
-        #get wrap condition:
-        if self.puzzle[self.row+1]=='NO_WRAP':
-            self.wrap=False
-        else:
-            self.wrap=True
         return (self.board,self.words,self.wrap)
     
     def word_match(self,word,current_pos,direction,index_list):
@@ -119,14 +129,15 @@ class word_puzzle:
                 self.output=self.output+'Not Found'+'\n'
         
         with open("Output_file.txt","w") as write_file:
-                    write_file.write(self.output)
+          write_file.write(self.output)
         return self.output
         
 
+
+
 start_time=datetime.datetime.now()
-class1=word_puzzle("Input_file.txt")
-class1.get_puzzle()
 
-
-#print class1.find_word_list(*class1.get_puzzle())
-print "time took to process words is ", datetime.datetime.now()-start_time
+WordSearch=word_puzzle("Input_file_for_parallel.txt")
+wordcount=len(WordSearch.get_puzzle()[1])
+WordSearch.find_word_list(*WordSearch.get_puzzle())
+print "time took to process %s words is "%wordcount, datetime.datetime.now()-start_time

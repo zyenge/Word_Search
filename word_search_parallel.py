@@ -1,17 +1,30 @@
 from multiprocessing import Pool
 import datetime
 from utility_function import *
+import sys
 
 
-def get_file(file_dir):
-  with open(file_dir,'r') as f:
+
+def get_file(file_dir="Input_file_for_parallel.txt"):
+  try:
+    with open(file_dir,'r') as f:
       puzzle= [i.rstrip('\n') for i in f.readlines()]
-  return puzzle
+      return puzzle
+  except Exception as readerror:
+    print readerror
+    sys.exit(0)
+
 
 def get_row_column(puzzle):
-  row=int(puzzle[0].split()[0])
-  column=int(puzzle[0].split()[1])
-  return (row,column)
+  try:
+    row=int(puzzle[0].split()[0])
+    column=int(puzzle[0].split()[1])
+    return (row,column)
+  except Exception as griderror:
+    print "grid coordinates format not correct"
+    print griderror
+    sys.exit(0)
+
 
 def wrap_bool(puzzle,row):
   """return wrap condition boolean"""
@@ -19,7 +32,11 @@ def wrap_bool(puzzle,row):
     return False
   elif puzzle[row+1]=='WRAP':
     return True
-
+  else:
+    print "wrap condition not specified or the number of rows doens't match the given row count at line %s" %str(row+1)
+    sys.exit(0)
+    
+    
 def get_wordlist(puzzle,row):
   words=[]
   word_count=int(puzzle[row+2])
@@ -29,12 +46,17 @@ def get_wordlist(puzzle,row):
   return words
 
 
-def get_board(puzzle,row):
+def get_board(puzzle,row,column):
   board=[]
   for count in range(row):
+    if len(puzzle[1+count])==column:
       board.append([board_row for board_row in puzzle[1+count]])
+    else:
+      print "column counts doen't match column number at line %s" %puzzle[1+count]
+      sys.exit(0)
+      return None
   return board
-
+      
 
 
 def word_match(word,current_pos,direction,index_list,board):
@@ -87,17 +109,17 @@ def find_word_list(sub_words):
     (0,4) (4,4)
     NOT FOUND
     
-    I need to output dictionaries on each processors, combine them in the reducing stage (see line 135 ), and match up with the 
+    I need to output dictionaries on each processors, combine them in the reducing stage (see line 156 ), and match up with the 
     original word list sequence then return a string for final output
     """
     
     output={}
     
-    puzzle=get_file("Input_file.txt")
+    puzzle=get_file()
     (row,column)=get_row_column(puzzle)
     wrap=wrap_bool(puzzle,row)
     words=get_wordlist(puzzle,row)
-    board=get_board(puzzle,row)
+    board=get_board(puzzle,row,column)
     
     for word in sub_words:
         init_index=[]
@@ -130,6 +152,7 @@ def find_word_list(sub_words):
 
 
 
+
 """------------------------------Reducer-----------------------------""" 
 def Reduce(words, words_search_result):
   """combine result from different processors"""
@@ -153,7 +176,7 @@ if __name__ == '__main__':
   pool = Pool(processes=4,)
   start_time=datetime.datetime.now()
  
-  puzzle=get_file("Input_file_for_parallel.txt")
+  puzzle=get_file()
   (row,column)=get_row_column(puzzle)
   words=get_wordlist(puzzle,row)
 
@@ -168,4 +191,4 @@ if __name__ == '__main__':
   with open("Output_file_by_parallel.txt","w") as write_multi:
       write_multi.write(writeout)
   
-  print "time took to process %s words parallelly is " %puzzle[row+2], datetime.datetime.now()-start_time
+  print "time took to process %s words in parallel is " %puzzle[row+2], datetime.datetime.now()-start_time
