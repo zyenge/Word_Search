@@ -138,7 +138,7 @@ if __name__ == '__main__':
   pool = Pool(processes=4,)
   start_time2=datetime.datetime.now()
  
-  puzzle=get_file("Input_file.txt")
+  puzzle=get_file("Input_file_long.txt")
   (row,column)=get_row_column(puzzle)
   words=get_wordlist(puzzle,row)
 
