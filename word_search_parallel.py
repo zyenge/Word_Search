@@ -20,7 +20,6 @@ def wrap_bool(puzzle,row):
   elif puzzle[row+1]=='WRAP':
     return True
 
-#word_list
 def get_wordlist(puzzle,row):
   words=[]
   word_count=int(puzzle[row+2])
@@ -40,8 +39,8 @@ def get_board(puzzle,row):
 
 def word_match(word,current_pos,direction,index_list,board):
     """
-    for one word in the word list:
-    Recursively matching the word letter by letter in one direction (dx,dy).
+    This is a recursive function used to search a given word leter by letter in one direction (dx,dy)
+    
     The function returns the position of the last letter and end recursion if reach the end of the word, else return False
         
     **parameters:
@@ -68,16 +67,32 @@ def word_match(word,current_pos,direction,index_list,board):
         return False
 
 
-def chunk(l,n):
+def chunk(wordlist,n):
   """split the word list into n chucks for parallel processing """
-  for i in xrange(0, len(l), n):
-    yield l[i:i+n]
+  for i in xrange(0, len(wordlist), n):
+    yield wordlist[i:i+n]
 
 
 
 """----------------------map function----------------------------"""
 def find_word_list(sub_words):
+    
+    """
+    for each sub word list, it returns a dictionary with each word as keys and postions (start, end) or 'not found' as values. 
+    The reason for returning a dictionary instead of a string with only positions (like I did with the non_parallel case) is that 
+    each process works at it's own speed and may return output at a different sequence than the given word sequence. 
+    So if I need to produce an output like:
+    
+    (1,2) (1,6)
+    (0,4) (4,4)
+    NOT FOUND
+    
+    I need to output dictionaries on each processors, combine them in the reducing stage (see line 135 ), and match up with the 
+    original word list sequence then return a string for final output
+    """
+    
     output={}
+    
     puzzle=get_file("Input_file.txt")
     (row,column)=get_row_column(puzzle)
     wrap=wrap_bool(puzzle,row)
@@ -136,7 +151,7 @@ def Reduce(words, words_search_result):
 
 if __name__ == '__main__':
   pool = Pool(processes=4,)
-  start_time2=datetime.datetime.now()
+  start_time=datetime.datetime.now()
  
   puzzle=get_file("Input_file_for_parallel.txt")
   (row,column)=get_row_column(puzzle)
@@ -148,7 +163,9 @@ if __name__ == '__main__':
 
   writeout=Reduce(words,parallel_process)
   
+  """The required output file will save to the file, the time took to run is printed to the screen"""
+  
   with open("Output_file_by_parallel.txt","w") as write_multi:
       write_multi.write(writeout)
-
-  print datetime.datetime.now()-start_time2
+  
+  print "time took to process %s words parallelly is " %puzzle[row+2], datetime.datetime.now()-start_time

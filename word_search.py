@@ -1,5 +1,6 @@
 import sys
 from utility_function import *
+import datetime
 
 class word_puzzle:
     
@@ -110,12 +111,11 @@ class word_puzzle:
                             self.output=self.output+str(xy)+' '+str(positive_loc(find_match[0],find_match[1],self.row,self.column))+'\n'
                             break
                     
-                # if the word 
+                
                 if find_match!= False:
                     break
             
             if find_match == False:
-                #print word,'Not Found'
                 self.output=self.output+'Not Found'+'\n'
         
         with open("Output_file.txt","w") as write_file:
@@ -123,6 +123,10 @@ class word_puzzle:
         return self.output
         
 
+start_time=datetime.datetime.now()
 class1=word_puzzle("Input_file.txt")
 class1.get_puzzle()
-print class1.find_word_list(*class1.get_puzzle())
+
+
+#print class1.find_word_list(*class1.get_puzzle())
+print "time took to process words is ", datetime.datetime.now()-start_time
