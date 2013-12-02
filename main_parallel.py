@@ -2,61 +2,16 @@ from multiprocessing import Pool
 import datetime
 from utility_function import *
 import sys
+from super_word_search import puzzle_board
 
 
 
-def get_file(file_dir="Input_file_for_parallel.txt"):
-  try:
-    with open(file_dir,'r') as f:
-      puzzle= [i.rstrip('\n') for i in f.readlines()]
-      return puzzle
-  except Exception as readerror:
-    print readerror
-    sys.exit(0)
-
-
-def get_row_column(puzzle):
-  try:
-    row=int(puzzle[0].split()[0])
-    column=int(puzzle[0].split()[1])
-    return (row,column)
-  except Exception as griderror:
-    print "grid coordinates format not correct"
-    print griderror
-    sys.exit(0)
-
-
-def wrap_bool(puzzle,row):
-  """return wrap condition boolean"""
-  if puzzle[row+1]=='NO_WRAP':
-    return False
-  elif puzzle[row+1]=='WRAP':
-    return True
-  else:
-    print "wrap condition not specified or the number of rows doens't match the given row count at line %s" %str(row+1)
-    sys.exit(0)
-    
-    
-def get_wordlist(puzzle,row):
-  words=[]
-  word_count=int(puzzle[row+2])
-  for count in range(word_count):
-      #print [j for j in puzzle[row+3+count]]
-      words.append(puzzle[row+3+count])
-  return words
-
-
-def get_board(puzzle,row,column):
-  board=[]
-  for count in range(row):
-    if len(puzzle[1+count])==column:
-      board.append([board_row for board_row in puzzle[1+count]])
-    else:
-      print "column counts doen't match column number at line %s" %puzzle[1+count]
-      sys.exit(0)
-      return None
-  return board
-      
+def chunk(wordlist,n, board_dict):
+  """split the word list into n chucks for parallel processing """
+  for i in xrange(0, len(wordlist), n):
+    sublist=wordlist[i:i+n]
+    sublist.append(board_dict)
+    yield sublist
 
 
 def word_match(word,current_pos,direction,index_list,board):
@@ -89,15 +44,8 @@ def word_match(word,current_pos,direction,index_list,board):
         return False
 
 
-def chunk(wordlist,n):
-  """split the word list into n chucks for parallel processing """
-  for i in xrange(0, len(wordlist), n):
-    yield wordlist[i:i+n]
-
-
-
 """----------------------map function----------------------------"""
-def find_word_list(sub_words):
+def find_word_list(para_dict):
     
     """
     for each sub word list, it returns a dictionary with each word as keys and postions (start, end) or 'not found' as values. 
@@ -115,11 +63,12 @@ def find_word_list(sub_words):
     
     output={}
     
-    puzzle=get_file()
-    (row,column)=get_row_column(puzzle)
-    wrap=wrap_bool(puzzle,row)
-    words=get_wordlist(puzzle,row)
-    board=get_board(puzzle,row,column)
+    
+    wrap=para_dict[-1]['wrap']
+    words=para_dict[-1]['words']
+    board=para_dict[-1]['board']
+    (row,column)=(len(board),len(board[0]))
+    sub_words=para_dict[:-1]
     
     for word in sub_words:
         init_index=[]
@@ -173,22 +122,24 @@ def Reduce(words, words_search_result):
 
 
 if __name__ == '__main__':
+  board=puzzle_board("Input_file_for_parallel.txt")
+  words=board.get_words()
+  wrap=board.get_wrap()
+
   pool = Pool(processes=4,)
   start_time=datetime.datetime.now()
- 
-  puzzle=get_file()
-  (row,column)=get_row_column(puzzle)
-  words=get_wordlist(puzzle,row)
-
-  partitioned_text = list(chunk(words, len(words) / 4))
+   
+  board_dict = {'board':board.get_board(),'words':words,'wrap': wrap}
   
+  partitioned_text = list(chunk(words, len(words) / 4,board_dict))
+    
   parallel_process= pool.map(find_word_list, partitioned_text)
-
+  
   writeout=Reduce(words,parallel_process)
   
-  """The required output file will save to the file, the time took to run is printed to the screen"""
+  """The required output file will save to file, the time took to run is printed to the screen"""
   
   with open("Output_file_by_parallel.txt","w") as write_multi:
       write_multi.write(writeout)
   
-  print "time took to process %s words in parallel is " %puzzle[row+2], datetime.datetime.now()-start_time
+  print "time took to process %s words in parallel is " %len(words), datetime.datetime.now()-start_time
